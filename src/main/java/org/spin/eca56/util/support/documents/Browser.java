@@ -161,6 +161,10 @@ public class Browser extends DictionaryDocument {
 			.collect(Collectors.joining(" "))
 		;
 
+		// Execute a process before search
+		boolean isSearchProcess = browser.get_ColumnIndex("SearchProcess_ID") >= 0 && browser.get_ValueAsBoolean("SearchProcess_ID");
+		documentDetail.put("is_search_process", isSearchProcess);
+
 		documentDetail.put("context_column_names", ReferenceUtil.getContextColumnNames(
 				Optional.ofNullable(queryClause).orElse("")
 				+ Optional.ofNullable(browser.getWhereClause()).orElse("")
