@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Form;
+import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_AD_Workflow;
@@ -39,6 +40,7 @@ import org.compiere.model.MTree;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.wf.MWorkflow;
 import org.spin.eca56.util.support.DictionaryDocument;
 
@@ -50,27 +52,42 @@ public class Role extends DictionaryDocument {
 
 	public static final String CHANNEL = "role";
 	public static final String KEY = "new";
-	
+
 	@Override
 	public String getKey() {
 		return KEY;
 	}
-	
+
 	private Map<String, Object> convertRole(MRole role) {
 		Map<String, Object> detail = new HashMap<>();
 		detail.put("internal_id", role.getAD_Role_ID());
 		detail.put("id", role.getUUID());
 		detail.put("uuid", role.getUUID());
 		detail.put("name", role.getName());
+
 		detail.put("description", role.getDescription());
-		MClientInfo clientInfo = MClientInfo.get(role.getCtx());
 		int treeId = role.getAD_Tree_Menu_ID();
-		if(treeId == 0) {
+		if(treeId <= 0) {
+			MClientInfo clientInfo = MClientInfo.get(role.getCtx());
 			treeId = clientInfo.getAD_Tree_Menu_ID();
+			if(treeId <= 0) {
+				String sql = "SELECT tr.AD_Tree_ID "
+					+ "FROM AD_Tree AS tr "
+					+ "WHERE tr.IsActive = 'Y' "
+					+ "AND tr.AD_Client_ID IN(0, ?) "
+					+ "AND tr.AD_Table_ID = ? "
+					+ "AND tr.IsAllNodes = 'Y' "
+					+ "AND ROWNUM = 1 "
+					+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID"
+				;
+				//	Get Tree
+				treeId = DB.getSQLValue(null, sql, role.getAD_Client_ID(), I_AD_Menu.Table_ID);
+			}
 		}
 		MTree tree = MTree.get(role.getCtx(), treeId, null);
 		detail.put("tree_id", treeId);
 		detail.put("tree_uuid", tree.getUUID());
+
 		detail.put("window_access", getWindowAccess(role));
 		detail.put("process_access", getProcessAccess(role));
 		detail.put("form_access", getFormAccess(role));
@@ -136,7 +153,7 @@ public class Role extends DictionaryDocument {
 			.collect(Collectors.toList())
 		;
 	}
-	
+
 	private List<String> getBrowserAccess(MRole role) {
 		return new Query(
 			role.getCtx(),
@@ -194,7 +211,7 @@ public class Role extends DictionaryDocument {
 		// ;
 		return new ArrayList<>();
 	}
-	
+
 	@Override
 	public DictionaryDocument withEntity(PO entity) {
 		MRole role = (MRole) entity;
@@ -202,11 +219,11 @@ public class Role extends DictionaryDocument {
 		putDocument(documentDetail);
 		return this;
 	}
-	
+
 	private Role() {
 		super();
 	}
-	
+
 	/**
 	 * Default instance
 	 * @return
@@ -214,7 +231,7 @@ public class Role extends DictionaryDocument {
 	public static Role newInstance() {
 		return new Role();
 	}
-	
+
 	@Override
 	public String getLanguage() {
 		return null;
@@ -224,4 +241,5 @@ public class Role extends DictionaryDocument {
 	public String getChannel() {
 		return CHANNEL;
 	}
+
 }
