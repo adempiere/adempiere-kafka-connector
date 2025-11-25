@@ -145,6 +145,10 @@ public class Browser extends DictionaryDocument {
 			documentDetail.put("window", referenceDetail);
 		}
 
+		// Execute a process before search
+		boolean isSearchProcess = browser.get_ColumnIndex("SearchProcess_ID") >= 0 && browser.get_ValueAsBoolean("SearchProcess_ID");
+		documentDetail.put("is_search_process", isSearchProcess);
+
 		String queryClause = new Query(
 			browser.getCtx(),
 			I_AD_View_Column.Table_Name,
