@@ -77,15 +77,20 @@ public class Role extends DictionaryDocument {
 					+ "AND tr.TreeType = 'MM' "
 					+ "AND tr.IsAllNodes = 'Y' "
 					+ "AND ROWNUM = 1 "
-					+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID"
+					+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID "
 				;
 				//	Get Tree
 				treeId = DB.getSQLValue(null, sql, role.getAD_Client_ID());
+				// treeId = MTree.getDefaultTreeIdFromTableId(clientId, I_AD_Menu.Table_ID);
 			}
 		}
-		MTree tree = MTree.get(role.getCtx(), treeId, null);
-		detail.put("tree_id", treeId);
-		detail.put("tree_uuid", tree.getUUID());
+		if (treeId > 0) {
+			MTree tree = MTree.get(role.getCtx(), treeId, null);
+			if (tree != null) {
+				detail.put("tree_id", treeId);
+				detail.put("tree_uuid", tree.getUUID());
+			}
+		}
 
 		detail.put("window_access", getWindowAccess(role));
 		detail.put("process_access", getProcessAccess(role));
