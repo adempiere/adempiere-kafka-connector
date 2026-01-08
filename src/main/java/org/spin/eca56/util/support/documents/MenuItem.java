@@ -136,6 +136,18 @@ public class MenuItem extends DictionaryDocument {
 				}
 			}
 		}
+
+		// new UI
+		if (menu.get_ColumnIndex("WebPath") >= 0 && Util.isEmpty(menu.get_ValueAsString("WebPath"))) {
+			detail.put("web_path", menu.get_ValueAsString("WebPath"));
+		}
+		if (menu.get_ColumnIndex("AD_Module_ID") >= 0 && menu.get_ValueAsInt("AD_Module_ID") > 0) {
+			detail.put("module_id", menu.get_ValueAsInt("AD_Module_ID"));
+		}
+		if (menu.get_ColumnIndex("AD_SubModule_ID") >= 0 && menu.get_ValueAsInt("AD_SubModule_ID") > 0) {
+			detail.put("sub_module_id", menu.get_ValueAsInt("AD_SubModule_ID"));
+		}
+
 		return detail;
 	}
 	
