@@ -47,21 +47,11 @@ import org.spin.queue.util.QueueLoader;
  *  @version Release 3.9.4
  */
 public class ExportDictionaryDefinition extends ExportDictionaryDefinitionAbstract {
-	
+
 	private AtomicInteger counter = new AtomicInteger();
 
 	@Override
 	protected String doIt() throws Exception {
-		//	For Roless Access
-		if(isExportRoles()) {
-			exportRolesDefinition();
-		}
-
-		//	For menu
-		if(isExportMenu()) {
-			exportMenuDefinition();
-		}
-
 		//	For Windows Definition
 		if(isExportWindows()) {
 			exportWindowsDefinition();
@@ -82,104 +72,24 @@ public class ExportDictionaryDefinition extends ExportDictionaryDefinitionAbstra
 			exportFormsDefinition();
 		}
 
+		//	For Roless Access
+		if(isExportRoles()) {
+			exportRolesDefinition();
+		}
+
+		//	For Tree
+		if(isExportTree()) {
+			exportTreeDefinition();
+		}
+
+		//	For Menu
+		if(isExportMenu()) {
+			exportMenuItemDefinition();
+		}
+
 		//	
 		return "@Created@ " + counter.get();
 	}
-
-
-	private void exportMenuDefinition() {
-		exportTree();
-		exportMenuItemDefinition();
-	}
-	
-	private void exportTree() {
-		addLog("@AD_Tree_ID@");
-		new Query(
-				getCtx(),
-				I_AD_Tree.Table_Name,
-				I_AD_Tree.COLUMNNAME_TreeType + " = ?",
-				get_TrxName()
-		)
-			.setOnlyActiveRecords(true)
-			.setParameters(MTree.TREETYPE_Menu)
-			.getIDsAsList()
-			.forEach(treeId -> {
-				MTree tree = new MTree(getCtx(), treeId, false, false, null, null);
-				QueueLoader.getInstance()
-					.getQueueManager(ApplicationDictionary.CODE)
-					.withEntity(tree)
-					.addToQueue()
-				;
-				addLog(tree.getAD_Tree_ID() + " - " + tree.getName());
-				counter.incrementAndGet();
-			})
-		;
-	}
-
-	private void exportRolesDefinition() {
-		addLog("@AD_Role_ID@");
-
-		// Add filter a specific Role
-		String whereClause = "";
-		List<Object> filtersList = new ArrayList<>();
-		if (this.getRoleId() > 0) {
-			whereClause = "AD_Role_ID = ?";
-			filtersList.add(this.getRoleId());
-		}
-		new Query(
-				getCtx(),
-				I_AD_Role.Table_Name,
-				whereClause,
-				get_TrxName()
-		)
-			.setOnlyActiveRecords(true)
-			.setParameters(filtersList)
-			.getIDsAsList()
-			.forEach(roleId -> {
-				MRole role = MRole.get(getCtx(), roleId);
-				QueueLoader.getInstance()
-					.getQueueManager(ApplicationDictionary.CODE)
-					.withEntity(role)
-					.addToQueue()
-				;
-				addLog(role.getAD_Role_ID() + " - " + role.getName());
-				counter.incrementAndGet();
-			})
-		;
-	}
-
-	private void exportMenuItemDefinition() {
-		addLog("@AD_Menu_ID@");
-
-		// Add filter a specific Menu
-		String whereClause = "";
-		List<Object> filtersList = new ArrayList<>();
-		if (this.getMenuId() > 0) {
-			whereClause = "AD_Menu_ID = ?";
-			filtersList.add(this.getMenuId());
-		}
-		new Query(
-				getCtx(),
-				I_AD_Menu.Table_Name,
-				whereClause,
-				get_TrxName()
-		)
-			.setOnlyActiveRecords(true)
-			.setParameters(filtersList)
-			.getIDsAsList()
-			.forEach(menuId -> {
-				MMenu menu = new MMenu(getCtx(), menuId, get_TrxName());
-				QueueLoader.getInstance()
-					.getQueueManager(ApplicationDictionary.CODE)
-					.withEntity(menu)
-					.addToQueue()
-				;
-				addLog(menu.getAD_Menu_ID() + " - " + menu.getName());
-				counter.incrementAndGet();
-			})
-		;
-	}
-
 
 	private void exportWindowsDefinition() {
 		addLog("@AD_Window_ID@");
@@ -245,6 +155,7 @@ public class ExportDictionaryDefinition extends ExportDictionaryDefinitionAbstra
 		});
 	}
 
+
 	private void exportBrowsersDefinition() {
 		addLog("@AD_Browse_ID@");
 
@@ -305,6 +216,106 @@ public class ExportDictionaryDefinition extends ExportDictionaryDefinitionAbstra
 					.addToQueue()
 				;
 				addLog(form.getClassname() + " - " + form.getName());
+				counter.incrementAndGet();
+			})
+		;
+	}
+
+
+	private void exportRolesDefinition() {
+		addLog("@AD_Role_ID@");
+
+		// Add filter a specific Role
+		String whereClause = "";
+		List<Object> filtersList = new ArrayList<>();
+		if (this.getRoleId() > 0) {
+			whereClause = "AD_Role_ID = ?";
+			filtersList.add(this.getRoleId());
+		}
+		new Query(
+				getCtx(),
+				I_AD_Role.Table_Name,
+				whereClause,
+				get_TrxName()
+		)
+			.setOnlyActiveRecords(true)
+			.setParameters(filtersList)
+			.getIDsAsList()
+			.forEach(roleId -> {
+				MRole role = MRole.get(getCtx(), roleId);
+				QueueLoader.getInstance()
+					.getQueueManager(ApplicationDictionary.CODE)
+					.withEntity(role)
+					.addToQueue()
+				;
+				addLog(role.getAD_Role_ID() + " - " + role.getName());
+				counter.incrementAndGet();
+			})
+		;
+	}
+
+
+	private void exportTreeDefinition() {
+		addLog("@AD_Tree_ID@");
+		new Query(
+				getCtx(),
+				I_AD_Tree.Table_Name,
+				I_AD_Tree.COLUMNNAME_TreeType + " = ?",
+				get_TrxName()
+		)
+			.setOnlyActiveRecords(true)
+			.setParameters(MTree.TREETYPE_Menu)
+			.getIDsAsList()
+			.forEach(treeId -> {
+				MTree tree = new MTree(getCtx(), treeId, false, false, null, null);
+				QueueLoader.getInstance()
+					.getQueueManager(ApplicationDictionary.CODE)
+					.withEntity(tree)
+					.addToQueue()
+				;
+				addLog(tree.getAD_Tree_ID() + " - " + tree.getName());
+				counter.incrementAndGet();
+			})
+		;
+	}
+
+
+	private void exportMenuItemDefinition() {
+		addLog("@AD_Menu_ID@");
+
+		// Add filter a specific Menu
+		String whereClause = "";
+		List<Object> filtersList = new ArrayList<>();
+		if (this.getMenuId() > 0) {
+			whereClause = "AD_Menu_ID = ?";
+			filtersList.add(this.getMenuId());
+		} else if (this.isFilterByTree() && this.isExportTree() && this.getTreeId() > 0) {
+			whereClause = "AD_Menu_ID IN("
+				+ "SELECT Node_ID FROM AD_TreeNodeMM AS tn "
+					+ "WHERE "
+					+ "tn.AD_Tree_ID = ? "
+					+ "AND AD_Menu.AD_Menu_ID = tn.Node_ID"
+				+ ")"
+			;
+			filtersList.add(this.getTreeId());
+		}
+		new Query(
+				getCtx(),
+				I_AD_Menu.Table_Name,
+				whereClause,
+				get_TrxName()
+		)
+			.setOnlyActiveRecords(true)
+			.setParameters(filtersList)
+			.getIDsAsList()
+			.forEach(menuId -> {
+				MMenu menu = new MMenu(getCtx(), menuId, get_TrxName());
+				QueueLoader.getInstance()
+					.getQueueManager(ApplicationDictionary.CODE)
+					.withEntity(menu)
+					.addToQueue()
+				;
+				addLog(menu.getAD_Menu_ID() + " - " + menu.getName());
 				counter.incrementAndGet();
 			})
 		;
