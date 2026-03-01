@@ -59,12 +59,6 @@ public class ExportCurrentDictionaryDefinition extends ExportCurrentDictionaryDe
 
 	@Override
 	protected String doIt() throws Exception {
-		//	For menu
-		if (this.getTable_ID() == I_AD_Menu.Table_ID) {
-			exportMenuItemDefinition();
-			exportTree();
-		}
-
 		//	For Window Definition
 		if(this.getTable_ID() == I_AD_Window.Table_ID) {
 			exportWindowDefinition();
@@ -85,7 +79,103 @@ public class ExportCurrentDictionaryDefinition extends ExportCurrentDictionaryDe
 			exportFormDefinition();
 		}
 
+		//	For Menu Tree
+		if (this.getTable_ID() == I_AD_Tree.Table_ID) {
+			exportMenuTree();
+		}
+
+		//	For menu
+		if (this.getTable_ID() == I_AD_Menu.Table_ID) {
+			exportMenuItemDefinition();
+		}
+
 		return "Ok";
+	}
+
+	private void exportWindowDefinition() {
+		addLog("@AD_Window_ID@");
+
+		// Add filter a specific Window
+		MWindow window = new MWindow(getCtx(), this.getRecord_ID(), get_TrxName());
+		if (window == null || window.getAD_Window_ID() <= 0) {
+			throw new AdempiereException("@NotFound@ @AD_Window_ID@ " + this.getRecord_ID());
+		}
+		QueueLoader.getInstance()
+			.getQueueManager(ApplicationDictionary.CODE)
+			.withEntity(window)
+			.addToQueue()
+		;
+		addLog(window.getAD_Window_ID() + " - " + window.getName());
+	}
+
+
+	private void exportProcessDefinition() {
+		addLog("@AD_Process_ID@");
+
+		// Add filter a specific Process
+		MProcess process = new MProcess(getCtx(), this.getRecord_ID(), get_TrxName());
+		if (process == null || process.getAD_Process_ID() <= 0) {
+			throw new AdempiereException("@NotFound@ @AD_Process_ID@ " + this.getRecord_ID());
+		}
+		QueueLoader.getInstance()
+			.getQueueManager(ApplicationDictionary.CODE)
+			.withEntity(process)
+			.addToQueue()
+		;
+		addLog(process.getValue() + " - " + process.getName());
+	}
+
+	private void exportBrowserDefinition() {
+		addLog("@AD_Browse_ID@");
+
+		// Add filter a specific Browse
+		MBrowse browser = new MBrowse(getCtx(), this.getRecord_ID(), get_TrxName());
+		if (browser == null || browser.getAD_Browse_ID() <= 0) {
+			throw new AdempiereException("@NotFound@ @AD_Browse_ID@ " + this.getRecord_ID());
+		}
+		QueueLoader.getInstance()
+			.getQueueManager(ApplicationDictionary.CODE)
+			.withEntity(browser)
+			.addToQueue()
+		;
+		addLog(browser.getValue() + " - " + browser.getName());
+	}
+
+
+	private void exportFormDefinition() {
+		addLog("@AD_Form_ID@");
+
+		// Add filter a specific Form
+		MForm form = new MForm(getCtx(), this.getRecord_ID(), get_TrxName());
+		if (form == null || form.getAD_Form_ID() <= 0) {
+			throw new AdempiereException("@NotFound@ @AD_Form_ID@ " + this.getRecord_ID());
+		}
+		QueueLoader.getInstance()
+			.getQueueManager(ApplicationDictionary.CODE)
+			.withEntity(form)
+			.addToQueue()
+		;
+		addLog(form.getClassname() + " - " + form.getName());
+	}
+
+
+	private void exportMenuTree() {
+		addLog("@AD_Tree_ID@");
+		MTree menuTree = new MTree(getCtx(), this.getRecord_ID(), false, false, null, get_TrxName());
+		if (menuTree == null || menuTree.getAD_Tree_ID() <= 0) {
+			throw new AdempiereException("@NotFound@ @AD_Tree_ID@ " + this.getRecord_ID());
+		}
+		if (!MTree.TREETYPE_Menu.equals(menuTree.getTreeType())) {
+			throw new AdempiereException("@NotFound@ MM @TreeType@ " + menuTree.getTreeType());
+		} else if (menuTree.getAD_Table_ID() != MMenu.Table_ID) {
+			throw new AdempiereException("@NotFound@ @AD_Table_ID@ " + menuTree.getAD_Table_ID());
+		}
+		QueueLoader.getInstance()
+			.getQueueManager(ApplicationDictionary.CODE)
+			.withEntity(menuTree)
+			.addToQueue()
+		;
+		addLog(menuTree.getAD_Tree_ID() + " - " + menuTree.getName());
 	}
 
 
@@ -101,90 +191,15 @@ public class ExportCurrentDictionaryDefinition extends ExportCurrentDictionaryDe
 			.setParameters(this.getRecord_ID())
 			.first()
 		;
+		if (menuItem == null) {
+			throw new AdempiereException("@NotFound@ @AD_Menu_ID@ " + this.getRecord_ID());
+		}
 		QueueLoader.getInstance()
 			.getQueueManager(ApplicationDictionary.CODE)
 			.withEntity(menuItem)
 			.addToQueue()
 		;
 		addLog(menuItem.getAD_Menu_ID() + " - " + menuItem.getName());
-	}
-
-	private void exportTree() {
-		new Query(
-				getCtx(),
-				I_AD_Tree.Table_Name,
-				// I_AD_Tree.COLUMNNAME_AD_Tree_ID + " = ? ",
-				I_AD_Tree.COLUMNNAME_TreeType + " = ? AND " + I_AD_Tree.COLUMNNAME_AD_Table_ID + " = ? ",
-				get_TrxName()
-		)
-			.setOnlyActiveRecords(true)
-			.setParameters(MTree.TREETYPE_Menu, MMenu.Table_ID)
-			// .setParameters(menuItem.getAD_Tree_ID())
-			.getIDsAsList()
-			.forEach(treeId -> {
-				MTree tree = new MTree(getCtx(), treeId, false, false, null, null);
-				QueueLoader.getInstance()
-					.getQueueManager(ApplicationDictionary.CODE)
-					.withEntity(tree)
-					.addToQueue()
-				;
-				addLog(tree.getAD_Tree_ID() + " - " + tree.getName());
-			})
-		;
-	}
-
-	private void exportWindowDefinition() {
-		addLog("@AD_Window_ID@");
-
-		// Add filter a specific Window
-		MWindow window = new MWindow(getCtx(), this.getRecord_ID(), get_TrxName());
-		QueueLoader.getInstance()
-			.getQueueManager(ApplicationDictionary.CODE)
-			.withEntity(window)
-			.addToQueue()
-		;
-		addLog(window.getAD_Window_ID() + " - " + window.getName());
-	}
-
-
-	private void exportProcessDefinition() {
-		addLog("@AD_Process_ID@");
-
-		// Add filter a specific Process
-		MProcess process = new MProcess(getCtx(), this.getRecord_ID(), get_TrxName());
-		QueueLoader.getInstance()
-			.getQueueManager(ApplicationDictionary.CODE)
-			.withEntity(process)
-			.addToQueue()
-		;
-		addLog(process.getValue() + " - " + process.getName());
-	}
-
-	private void exportBrowserDefinition() {
-		addLog("@AD_Browse_ID@");
-
-		// Add filter a specific Browse
-		MBrowse browser = new MBrowse(getCtx(), this.getRecord_ID(), get_TrxName());
-		QueueLoader.getInstance()
-			.getQueueManager(ApplicationDictionary.CODE)
-			.withEntity(browser)
-			.addToQueue()
-		;
-		addLog(browser.getValue() + " - " + browser.getName());
-	}
-
-
-	private void exportFormDefinition() {
-		addLog("@AD_Form_ID@");
-
-		// Add filter a specific Form
-		MForm form = new MForm(getCtx(), this.getRecord_ID(), get_TrxName());
-		QueueLoader.getInstance()
-			.getQueueManager(ApplicationDictionary.CODE)
-			.withEntity(form)
-			.addToQueue()
-		;
-		addLog(form.getClassname() + " - " + form.getName());
 	}
 
 }

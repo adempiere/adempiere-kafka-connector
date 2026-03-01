@@ -55,6 +55,12 @@ public abstract class ExportDictionaryDefinitionAbstract extends SvrProcess {
 	public static final String ECA56_EXPORTROLES = "ECA56_ExportRoles";
 	/**	Parameter Name for Role	*/
 	public static final String AD_ROLE_ID = "AD_Role_ID";
+	/**	Parameter Name for Export Tree	*/
+	public static final String ECA56_EXPORTTREE = "ECA56_ExportTree";
+	/**	Parameter Name for Tree	*/
+	public static final String AD_TREE_ID = "AD_Tree_ID";
+	/**	Parameter Name for Filter By Tree	*/
+	public static final String ECA56_ISFILTERBYTREE = "ECA56_IsFilterByTree";
 	/**	Parameter Value for Export Menu	*/
 	private boolean isExportMenu;
 	/**	Parameter Value for Menu	*/
@@ -79,6 +85,12 @@ public abstract class ExportDictionaryDefinitionAbstract extends SvrProcess {
 	private boolean isExportRoles;
 	/**	Parameter Value for Role	*/
 	private int roleId;
+	/**	Parameter Value for Export Tree	*/
+	private boolean isExportTree;
+	/**	Parameter Value for Tree	*/
+	private int treeId;
+	/**	Parameter Value for Filter By Tree	*/
+	private boolean isFilterByTree;
 
 	@Override
 	protected void prepare() {
@@ -94,6 +106,9 @@ public abstract class ExportDictionaryDefinitionAbstract extends SvrProcess {
 		formId = getParameterAsInt(AD_FORM_ID);
 		isExportRoles = getParameterAsBoolean(ECA56_EXPORTROLES);
 		roleId = getParameterAsInt(AD_ROLE_ID);
+		isExportTree = getParameterAsBoolean(ECA56_EXPORTTREE);
+		treeId = getParameterAsInt(AD_TREE_ID);
+		isFilterByTree = getParameterAsBoolean(ECA56_ISFILTERBYTREE);
 	}
 
 	/**	 Getter Parameter Value for Export Menu	*/
@@ -214,6 +229,36 @@ public abstract class ExportDictionaryDefinitionAbstract extends SvrProcess {
 	/**	 Setter Parameter Value for Role	*/
 	protected void setRoleId(int roleId) {
 		this.roleId = roleId;
+	}
+
+	/**	 Getter Parameter Value for Export Tree	*/
+	protected boolean isExportTree() {
+		return isExportTree;
+	}
+
+	/**	 Setter Parameter Value for Export Tree	*/
+	protected void setExportTree(boolean isExportTree) {
+		this.isExportTree = isExportTree;
+	}
+
+	/**	 Getter Parameter Value for Tree	*/
+	protected int getTreeId() {
+		return treeId;
+	}
+
+	/**	 Setter Parameter Value for Tree	*/
+	protected void setTreeId(int treeId) {
+		this.treeId = treeId;
+	}
+
+	/**	 Getter Parameter Value for Filter By Tree	*/
+	protected boolean isFilterByTree() {
+		return isFilterByTree;
+	}
+
+	/**	 Setter Parameter Value for Filter By Tree	*/
+	protected void setIsFilterByTree(boolean isFilterByTree) {
+		this.isFilterByTree = isFilterByTree;
 	}
 
 	/**	 Getter Parameter Value for Process ID	*/
