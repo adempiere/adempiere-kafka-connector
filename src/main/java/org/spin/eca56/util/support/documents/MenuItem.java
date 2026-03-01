@@ -64,7 +64,7 @@ public class MenuItem extends DictionaryDocument {
 		detail.put("is_sales_transaction", menu.isSOTrx());
 		detail.put("is_summary", menu.isSummary());
 		detail.put("action", menu.getAction());
-		//	
+		//
 		if(!Util.isEmpty(menu.getAction())) {
 			if(menu.getAction().equals(MMenu.ACTION_Form)) {
 				if(menu.getAD_Form_ID() > 0) {
@@ -142,11 +142,7 @@ public class MenuItem extends DictionaryDocument {
 
 		// new UI
 		if (menu.get_ColumnIndex("WebPath") >= 0 && !Util.isEmpty(menu.get_ValueAsString("WebPath"))) {
-			final String targetPath = getTargetPath(
-				menu.get_ValueAsString("WebPath"),
-				menu.get_ValueAsInt("AD_Module_ID"),
-				menu.get_ValueAsInt("AD_SubModule_ID")
-			);
+			final String targetPath = getTargetPath(menu);
 			detail.put("target_path", targetPath);
 			detail.put("web_path", menu.get_ValueAsString("WebPath"));
 		}
@@ -160,13 +156,29 @@ public class MenuItem extends DictionaryDocument {
 		return detail;
 	}
 
-	private String getTargetPath(String webPath, int moduleId, int subModuleId) {
+	private String getTargetPath(MMenu menu) {
+		final String webPath = menu.get_ValueAsString("WebPath");
 		if (Util.isEmpty(webPath, true) || !webPath.contains("@")) {
 			return webPath;
 		}
 		Properties context = Env.getCtx();
 		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 
+		final int menuId = menu.getAD_Menu_ID();
+		final int windowId = menu.getAD_Window_ID();
+		final int processId = menu.getAD_Process_ID();
+		final int browserId = menu.getAD_Browse_ID();
+		final int workflowId = menu.getAD_Workflow_ID();
+		final int formId = menu.getAD_Form_ID();
+		final int moduleId = menu.get_ValueAsInt("AD_Module_ID");
+		final int subModuleId = menu.get_ValueAsInt("AD_SubModule_ID");
+
+		Env.setContext(context, windowNo, "AD_Menu_ID", menuId);
+		Env.setContext(context, windowNo, "AD_Window_ID", windowId);
+		Env.setContext(context, windowNo, "AD_Process_ID", processId);
+		Env.setContext(context, windowNo, "AD_Browse_ID", browserId);
+		Env.setContext(context, windowNo, "AD_Workflow_ID", workflowId);
+		Env.setContext(context, windowNo, "AD_Form_ID", formId);
 		Env.setContext(context, windowNo, "AD_Module_ID", moduleId);
 		Env.setContext(context, windowNo, "AD_SubModule_ID", subModuleId);
 
