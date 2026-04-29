@@ -34,6 +34,7 @@ import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MViewColumn;
 import org.compiere.model.MColumn;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
@@ -231,8 +232,7 @@ public class Browser extends DictionaryDocument {
 		detail.put("is_identifier", field.isIdentifier());
 
 		MViewColumn viewColumn = MViewColumn.getById(field.getCtx(), field.getAD_View_Column_ID(), null);
-		String columnName = viewColumn.getColumnName();
-		detail.put("column_name", columnName);
+		detail.put("column_name", viewColumn.getColumnName());
 
 		//	Value Properties
 		detail.put("is_range", field.isRange());
@@ -270,23 +270,43 @@ public class Browser extends DictionaryDocument {
 			elementName = field.getAD_Element().getColumnName();
 		}
 		detail.put("element_name", elementName);
-		ReferenceValues referenceValues = ReferenceUtil.getReferenceDefinition(
-			elementName,
+
+		//	Reference Value
+		int referenceValueId = field.getAD_Reference_Value_ID();
+
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		int displayTypeId = ReferenceUtil.overwriteDisplayType(
 			field.getAD_Reference_ID(),
-			field.getAD_Reference_Value_ID(),
-			field.getAD_Val_Rule_ID()
+			referenceValueId
 		);
-		if(referenceValues != null) {
-			Map<String, Object> referenceDetail = new HashMap<>();
-			referenceDetail.put("table_name", referenceValues.getTableName());
-			referenceDetail.put("reference_id", referenceValues.getReferenceId());
-			referenceDetail.put("reference_value_id", field.getAD_Reference_Value_ID());
-			referenceDetail.put("context_column_names", ReferenceUtil.getContextColumnNames(
-					referenceValues.getEmbeddedContextColumn()
-				)
+		if (ReferenceUtil.isLookupReference(displayTypeId)) {
+			//	Validation Code
+			int validationRuleId = field.getAD_Val_Rule_ID();
+
+			// TODO: Verify this conditional with "elementName" variable
+			String columnName = field.getAD_Element().getColumnName();
+			if (viewColumn.getAD_Column_ID() > 0) {
+				MColumn column = MColumn.get(field.getCtx(), viewColumn.getAD_Column_ID());
+				columnName = column.getColumnName();
+			}
+
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, columnName, validationRuleId
 			);
-			detail.put("reference", referenceDetail);
+			if (info != null) {
+				ReferenceValues referenceValues = ReferenceValues.newInstance(info);
+				Map<String, Object> referenceDetail = new HashMap<>();
+				referenceDetail.put("table_name", referenceValues.getTableName());
+				referenceDetail.put("access_level", referenceValues.getAccessLevel());
+				referenceDetail.put("reference_id", referenceValues.getDisplayTypeId());
+				referenceDetail.put("reference_value_id", referenceValues.getReferenceValueId());
+				referenceDetail.put("context_column_names", referenceValues.getContextColumns());
+				detail.put("reference", referenceDetail);
+			} else {
+				// detail.put("display_type", DisplayType.String);
+			}
 		}
+
 		detail.put("context_column_names", ReferenceUtil.getContextColumnNames(
 				Optional.ofNullable(field.getDefaultValue()).orElse("")
 				+ Optional.ofNullable(field.getDefaultValue2()).orElse("")

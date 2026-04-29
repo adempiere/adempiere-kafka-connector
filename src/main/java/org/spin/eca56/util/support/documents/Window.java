@@ -26,21 +26,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Tab;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.model.MBrowse;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MForm;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcess;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.DisplayType;
 import org.compiere.wf.MWorkflow;
 import org.spin.eca56.util.support.DictionaryDocument;
 
@@ -428,7 +432,7 @@ public class Window extends DictionaryDocument {
 			displayTypeId = column.getAD_Reference_ID();
 		}
 		detail.put("display_type", displayTypeId);
-		
+
 		//	Value Properties
 		detail.put("default_value", Optional.ofNullable(field.getDefaultValue()).orElse(column.getDefaultValue()));
 		detail.put("field_length", column.getFieldLength());
@@ -464,29 +468,45 @@ public class Window extends DictionaryDocument {
 		if(referenceValueId <= 0) {
 			referenceValueId = column.getAD_Reference_Value_ID();
 		}
-		int validationRuleId = field.getAD_Val_Rule_ID();
-		if(validationRuleId <= 0) {
-			validationRuleId = column.getAD_Val_Rule_ID();
+
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		displayTypeId = ReferenceUtil.overwriteDisplayType(
+			displayTypeId,
+			referenceValueId
+		);
+		if (ReferenceUtil.isLookupReference(displayTypeId)) {
+			//	Validation Code
+			int validationRuleId = field.getAD_Val_Rule_ID();
+			if(validationRuleId <= 0) {
+				validationRuleId = column.getAD_Val_Rule_ID();
+			}
+
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, column.getColumnName(), validationRuleId
+			);
+			if (info != null) {
+				ReferenceValues referenceValues = ReferenceValues.newInstance(info);
+				Map<String, Object> referenceDetail = new HashMap<>();
+				referenceDetail.put("table_name", referenceValues.getTableName());
+				referenceDetail.put("access_level", referenceValues.getAccessLevel());
+				referenceDetail.put("reference_id", referenceValues.getDisplayTypeId());
+				referenceDetail.put("reference_value_id", referenceValues.getReferenceValueId());
+				referenceDetail.put("context_column_names", referenceValues.getContextColumns());
+				detail.put("reference", referenceDetail);
+			} else {
+				// detail.put("display_type", DisplayType.String);
+			}
+		} else if (DisplayType.Button == displayTypeId) {
+			if (column.getColumnName().equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+				// To load default value
+				// builder.addContextColumnNames(I_AD_Table.COLUMNNAME_AD_Table_ID);
+				detail.put("context_column_names", Arrays.asList(I_AD_Table.COLUMNNAME_AD_Table_ID));
+			}
 		}
 
-		ReferenceValues referenceValues = ReferenceUtil.getReferenceDefinition(
-			column.getColumnName(),
-			displayTypeId,
-			referenceValueId,
-			validationRuleId
-		);
-		if(referenceValues != null) {
-			Map<String, Object> referenceDetail = new HashMap<>();
-			referenceDetail.put("table_name", referenceValues.getTableName());
-			referenceDetail.put("reference_id", referenceValues.getReferenceId());
-			referenceDetail.put("reference_value_id", referenceValueId);
-			referenceDetail.put("context_column_names", ReferenceUtil.getContextColumnNames(
-					referenceValues.getEmbeddedContextColumn()
-				)
-			);
-			detail.put("reference", referenceDetail);
-		}
-		detail.put("context_column_names", ReferenceUtil.getContextColumnNames(
+		detail.put(
+			"context_column_names",
+			ReferenceUtil.getContextColumnNames(
 				Optional.ofNullable(field.getDefaultValue()).orElse(column.getDefaultValue())
 			)
 		);

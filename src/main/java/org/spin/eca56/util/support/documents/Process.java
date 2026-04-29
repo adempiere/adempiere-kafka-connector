@@ -29,6 +29,7 @@ import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.model.MBrowse;
 import org.compiere.model.MForm;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
 import org.compiere.model.MReportView;
@@ -194,18 +195,34 @@ public class Process extends DictionaryDocument {
 		detail.put("is_info_only", parameter.isInfoOnly());
 
 		// External Info
-		ReferenceValues referenceValues = ReferenceUtil.getReferenceDefinition(parameter.getColumnName(), parameter.getAD_Reference_ID(), parameter.getAD_Reference_Value_ID(), parameter.getAD_Val_Rule_ID());
-		if(referenceValues != null) {
-			Map<String, Object> referenceDetail = new HashMap<>();
-			referenceDetail.put("table_name", referenceValues.getTableName());
-			referenceDetail.put("reference_id", referenceValues.getReferenceId());
-			referenceDetail.put("reference_value_id", parameter.getAD_Reference_Value_ID());
-			referenceDetail.put("context_column_names", ReferenceUtil.getContextColumnNames(
-					referenceValues.getEmbeddedContextColumn()
-				)
+		int referenceValueId = parameter.getAD_Reference_Value_ID();
+
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		int displayTypeId = ReferenceUtil.overwriteDisplayType(
+			parameter.getAD_Reference_ID(),
+			referenceValueId
+		);
+		if (ReferenceUtil.isLookupReference(displayTypeId)) {
+			//	Validation Code
+			int validationRuleId = parameter.getAD_Val_Rule_ID();
+
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, parameter.getColumnName(), validationRuleId
 			);
-			detail.put("reference", referenceDetail);
+			if (info != null) {
+				ReferenceValues referenceValues = ReferenceValues.newInstance(info);
+				Map<String, Object> referenceDetail = new HashMap<>();
+				referenceDetail.put("table_name", referenceValues.getTableName());
+				referenceDetail.put("access_level", referenceValues.getAccessLevel());
+				referenceDetail.put("reference_id", referenceValues.getDisplayTypeId());
+				referenceDetail.put("reference_value_id", referenceValues.getReferenceValueId());
+				referenceDetail.put("context_column_names", referenceValues.getContextColumns());
+				detail.put("reference", referenceDetail);
+			} else {
+				// detail.put("display_type", DisplayType.String);
+			}
 		}
+
 		detail.put("context_column_names", ReferenceUtil.getContextColumnNames(
 				Optional.ofNullable(parameter.getDefaultValue()).orElse("")
 				+ Optional.ofNullable(parameter.getDefaultValue2()).orElse("")
